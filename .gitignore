@@ -1,0 +1,14 @@
+.dub
+docs.json
+__dummy.html
+docs/
+blockchain.so
+blockchain.dylib
+blockchain.dll
+blockchain.a
+blockchain.lib
+blockchain-test-*
+*.exe
+*.o
+*.obj
+*.lst

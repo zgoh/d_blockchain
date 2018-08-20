@@ -1,0 +1,9 @@
+{
+	"name": "blockchain",
+	"authors": [
+		"zhgoh"
+	],
+	"description": "A minimal D application.",
+	"copyright": "Copyright © 2018, zhgoh",
+	"license": "MIT"
+}
