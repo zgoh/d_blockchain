@@ -1,14 +1,18 @@
 import std.stdio;
+import std.digest.sha;
+import std.conv;
+
+static const Hash zero = [0];
 
 void Add(T)(ref T[] arr, ref T elem)
 {
     arr[arr.length++] = elem;
 }
 
-int GenerateHash()
+alias Hash = ubyte[32];
+Hash GenerateHash(string data)
 {
-    static int hash = 20;
-    return hash++;
+    return sha256Of(data);
 }
 
 /*
@@ -31,22 +35,37 @@ class BlockChain
 
     Block MineNextBlock(Transaction transaction)
     {
+        return MineNextBlock([transaction]);
+    }
+
+    Block MineNextBlock(Transaction[] transactions)
+    {
         if (!IsValid())
             return null;
         
         // Check if this is the genesis block that we are mining
         auto prevHash = blocks.length == 0 ? 
-            0 : blocks[blocks.length - 1].GetHash();
+            zero : blocks[blocks.length - 1].GetHash();
         
-        auto block = new Block(GenerateHash(), prevHash, transaction);
+        string transactionData;
+        foreach (transaction; transactions)
+        {
+            transactionData ~= transaction.GetHash();
+        }
+
+        auto compute = to!string(blocks.length) ~ transactionData;
+        auto block = new Block(GenerateHash(compute), prevHash, transactions);
         return block;
     }
 
     void PrintChain()
     {
+        int index = 0;
         foreach (block; blocks)
         {
-            writefln("Prev hash: %d, Current hash: %d", block.GetPrevHash(), block.GetHash());
+            writeln("Block: ", index++);
+            writeln("Transaction:");
+            //writeln("Prev hash: ", block.GetPrevHash(), " , Current hash: ", block.GetHash());
             foreach (transaction; block.GetTransactions())
             {
                 transaction.PrintData();
@@ -72,15 +91,14 @@ class Block
 {
     private Transaction[] transactions;
 
-    private immutable int hash;
-    private immutable int prevHash;
+    private immutable Hash hash;
+    private immutable Hash prevHash;
 
-    this(int hash, int prevHash, Transaction transaction)
+    this(Hash hash, Hash prevHash, Transaction[] transactions)
     {
         this.hash = hash;
         this.prevHash = prevHash;
-
-        AddTransaction(transaction);
+        this.transactions = transactions;
     }
 
     const (Transaction[]) GetTransactions() const
@@ -93,12 +111,12 @@ class Block
         Add(transactions, transaction);
     }
 
-    int GetHash() const
+    Hash GetHash() const
     {
         return hash;
     }
 
-    int GetPrevHash() const
+    Hash GetPrevHash() const
     {
         return prevHash;
     }
@@ -119,6 +137,11 @@ class Transaction
     const (string) GetString() const
     {
         return data;
+    }
+
+    const (string) GetHash() const
+    {
+        return to!string(GenerateHash(data));
     }
 
     void PrintData() const
