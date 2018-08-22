@@ -2,8 +2,6 @@ import std.stdio;
 import std.digest.sha;
 import std.conv;
 
-static const Hash zero = [0];
-
 void Add(T)(ref T[] arr, ref T elem)
 {
     arr[arr.length++] = elem;
@@ -15,20 +13,20 @@ Hash GenerateHash(string data)
     return sha256Of(data);
 }
 
+static const Hash ZERO_HASH = [0];
+
 /*
     Hold all the blocks
 */
 class BlockChain
 {
     private Block[] blocks;
+    private bool isAltered = false;
 
     void AddBlock(Block block)
     {
         if (block is null)
-        {
-            writeln("Warning: Adding invalid block");
             return;
-        }
         
         Add(blocks, block);
     }
@@ -41,11 +39,14 @@ class BlockChain
     Block MineNextBlock(Transaction[] transactions)
     {
         if (!IsValid())
+        {
+            writeln("Error: Blockchain is invalid now.");
             return null;
+        }
         
         // Check if this is the genesis block that we are mining
         auto prevHash = blocks.length == 0 ? 
-            zero : blocks[blocks.length - 1].GetHash();
+            ZERO_HASH : blocks[blocks.length - 1].GetHash();
         
         string transactionData;
         foreach (transaction; transactions)
@@ -75,12 +76,27 @@ class BlockChain
 
     bool IsValid() const
     {
+        // No need to check anymore once our blockchain is altered
+        return isAltered ?  false : GetValidity();
+    }
+
+    private bool GetValidity() const
+    {
         for (size_t i = 1; i < blocks.length; ++i)
         {
             if (blocks[i].GetPrevHash() != blocks[i - 1].GetHash())
                 return false;
         }
         return true;
+    }
+
+    /*
+        Test if the block chain still works after altering some data
+    */
+    void TestAlterChain(size_t id)
+    {
+        assert(id < blocks.length);
+        blocks[id] = new Block(ZERO_HASH, ZERO_HASH, [new Transaction("Fake Data")]);
     }
 }
 

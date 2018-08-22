@@ -2,6 +2,7 @@
     Simple block chain proof of concept
 */
 import blocks;
+import std.stdio;
 
 void main()
 {
@@ -21,4 +22,21 @@ void main()
     chain.AddBlock(block);
 
     chain.PrintChain();
+
+    writeln("Is blockchain still valid: ", chain.IsValid());
+    writeln("-------------------- Testing altering blockchain and adding -----------------------");
+
+    // Alter the chain
+    chain.TestAlterChain(0);
+
+    // And try adding
+    writeln("Adding new blocks here will be invalid, as blockchain is violated");
+    auto tx3 = new Transaction("DD");
+    block = chain.MineNextBlock(tx3);
+
+    writeln("Block is not added.");
+    chain.AddBlock(block);
+
+    chain.PrintChain();
+    writeln("Is blockchain still valid: ", chain.IsValid());
 }
